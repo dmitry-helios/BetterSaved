@@ -36,3 +36,4 @@ bot-key.pem
 # Ignore developer notes/readme
 
 dev_readme.md
+*.bat
