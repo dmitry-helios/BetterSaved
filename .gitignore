@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+venv/
+ENV/
+.venv/
+
+# VSCode
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and keys
+client_secret.json
+token.json
+bot-key.pem
+*.bkp
+*.bkp2
+*.bak
+
+# Logs
+*.log
+
+# Media (optional, if you want to ignore all media uploads)
+# media/
+
+# Ignore developer notes/readme
+
+dev_readme.md
