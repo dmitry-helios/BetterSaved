@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Main entry point for the Echo Telegram bot.
+Main entry point for the Echo Telegram bot. test
 """
 import logging
 import os

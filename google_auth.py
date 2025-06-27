@@ -21,7 +21,7 @@ SCOPES = [
 ]
 
 class GoogleDriveManager:
-    """Manages Google Drive operations and authentication."""
+    """Manages Google Drive operations and authentication.as"""
     
     def __init__(self, credentials_file: str = 'client_secret.json'):
         """Initialize with the path to client secrets file."""
