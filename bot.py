@@ -38,7 +38,7 @@ console_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(level
 
 # Configure root logger
 root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
+root_logger.setLevel(logging.WARNING)
 root_logger.addHandler(file_handler)
 root_logger.addHandler(console_handler)
 
@@ -81,16 +81,6 @@ class BetterSavedBot:
         self.application.add_handler(CommandHandler("disconnect_drive", self.disconnect_drive_command))
         self.application.add_handler(CommandHandler("fix_spreadsheet", self.fix_spreadsheet_command))
         
-        # Add nuke_user command with conversation handler
-        nuke_handler = ConversationHandler(
-            entry_points=[CommandHandler("nuke_user", self.nuke_user_command)],
-            states={
-                self.WAITING_FOR_NUKE_CONFIRMATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.process_nuke_confirmation)]
-            },
-            fallbacks=[CommandHandler("cancel", self.cancel_command)]
-        )
-        self.application.add_handler(nuke_handler)
-        
         # Conversation handler for Google Drive authentication
         # This must come BEFORE the general message handler
         conv_handler = ConversationHandler(
@@ -102,6 +92,18 @@ class BetterSavedBot:
             name="drive_auth_conversation"
         )
         self.application.add_handler(conv_handler)
+
+        # Add nuke_user command with conversation handler
+        nuke_handler = ConversationHandler(
+            entry_points=[CommandHandler("nuke_user", self.nuke_user_command)],
+            states={
+                self.WAITING_FOR_NUKE_CONFIRMATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.process_nuke_confirmation)]
+            },
+            fallbacks=[CommandHandler("cancel", self.cancel_command)]
+        )
+        self.application.add_handler(nuke_handler)
+        
+
         
         # Message handlers - must come AFTER conversation handlers
         # Register callback query handler for button clicks
