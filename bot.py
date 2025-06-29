@@ -837,6 +837,8 @@ class BetterSavedBot:
                 
                 # Set the conversation state
                 context.user_data['waiting_for_auth'] = True
+                #BUGFIX!!!
+                return self.WAITING_FOR_AUTH_CODE
                 
             except Exception as e:
                 logger.error(f"Error starting Drive connection from button: {e}")
