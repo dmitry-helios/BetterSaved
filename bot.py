@@ -80,14 +80,11 @@ class BetterSavedBot:
         self.application.add_handler(CommandHandler("user", self.user_command))
         self.application.add_handler(CommandHandler("disconnect_drive", self.disconnect_drive_command))
         self.application.add_handler(CommandHandler("fix_spreadsheet", self.fix_spreadsheet_command))
-
+        
         # Conversation handler for Google Drive authentication
-        # Add CallbackQueryHandler for "connect_drive" as an entry point
+        # This must come BEFORE the general message handler
         conv_handler = ConversationHandler(
-            entry_points=[
-                CommandHandler("connect_drive", self.connect_drive_command),
-                CallbackQueryHandler(self.connect_drive_button_callback, pattern="^connect_drive$")
-            ],
+            entry_points=[CommandHandler("connect_drive", self.connect_drive_command)],
             states={
                 self.WAITING_FOR_AUTH_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.process_auth_code)],
             },
@@ -799,16 +796,57 @@ class BetterSavedBot:
         user = query.from_user
         telegram_id = str(user.id)
         callback_data = query.data
-
+        
         # Log the button click
         logger.info(f"User {telegram_id} clicked button: {callback_data}")
-
+        
         # Always answer the callback query first to avoid the "loading" state
         await query.answer()
-
+        
         if callback_data == "connect_drive":
-            # This is now handled by connect_drive_button_callback in ConversationHandler
-            return ConversationHandler.END
+            # Create a new message with connect_drive instructions instead of trying to call the command
+            try:
+                # Generate authorization URL
+                auth_url, state = self.drive_manager.get_authorization_url()
+                
+                # Store state in user context for verification later
+                context.user_data['oauth_state'] = state
+                
+                # Send instructions with the auth URL in a single message using HTML formatting
+                instructions = (
+                    "🔄 <b>Connect to Google Drive</b>\n\n"
+                    "This will allow BetterSaved to access your Google Drive account and save your messages there.\n\n"
+                    "<i>Warning: this bot is in active development and has not completed Google's verification process. </i>"
+                    "<i>As such, it is limited to 100 users at this time. If you would like to use and test this bot, please contact the developer at @dmitry_helios.</i>\n\n"
+                    "1️⃣ Click the link below to authorize BetterSaved\n"
+                    "2️⃣ Sign in with your Google account\n"
+                    "3️⃣ Grant the requested permissions\n"
+                    "4️⃣ Copy the authorization code\n"
+                    "5️⃣ Send the code back to me\n\n"
+                )
+                
+                # Create HTML link
+                html_message = instructions + f'<a href="{auth_url}">Click here to connect</a>'
+                
+                # Send a new message instead of trying to edit the existing one
+                await query.message.reply_text(
+                    text=html_message,
+                    parse_mode='HTML',
+                    disable_web_page_preview=True
+                )
+                
+                # Set the conversation state
+                context.user_data['waiting_for_auth'] = True
+                #BUGFIX!!!
+                return self.WAITING_FOR_AUTH_CODE
+                
+            except Exception as e:
+                logger.error(f"Error starting Drive connection from button: {e}")
+                await query.message.reply_text(
+                    "❌ Sorry, I couldn't start the Google Drive connection process. "
+                    "Please try again later or use the /connect_drive command."
+                )
+            
         elif callback_data == "settings":
             # Create settings menu with buttons
             try:
