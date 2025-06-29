@@ -138,15 +138,19 @@ class BetterSavedBot:
             name=user.full_name or user.first_name
         )
         
-        # Welcome message caption with HTML formatting
-        welcome_caption = (f"{MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['title']}\n\n{MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['description']}")
+        # Get user's language preference from database
+        user_data = self.db.get_user_by_telegram_id(str(user.id))
+        user_lang = user_data.get('lang', 'en') if user_data else 'en'
         
-        # Create inline keyboard buttons
+        # Welcome message caption with HTML formatting using user's language
+        welcome_caption = (f"{MESSAGES[user_lang]['welcome']['title']}\n\n{MESSAGES[user_lang]['welcome']['description']}")
+        
+        # Create inline keyboard buttons using user's language
         keyboard = [
-            [InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['connect_drive'], callback_data="connect_drive")],
-            [InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['settings'], callback_data="settings")],
-            [InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['about'], callback_data="about"), 
-             InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['donate'], callback_data="donate")]
+            [InlineKeyboardButton(MESSAGES[user_lang]['welcome']['buttons']['connect_drive'], callback_data="connect_drive")],
+            [InlineKeyboardButton(MESSAGES[user_lang]['welcome']['buttons']['settings'], callback_data="settings")],
+            [InlineKeyboardButton(MESSAGES[user_lang]['welcome']['buttons']['about'], callback_data="about"), 
+             InlineKeyboardButton(MESSAGES[user_lang]['welcome']['buttons']['donate'], callback_data="donate")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
