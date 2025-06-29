@@ -60,7 +60,15 @@
       "confirm": "✅ Confirm",
       "disconnect": "❌ Disconnect",
       "connect": "🔗 Connect",
-      "settings": "⚙️ Settings"
+      "settings": "⚙️ Settings",
+      "language": "🌐 Language"
+    },
+    "language": {
+      "select": "🌐 Select your language",
+      "en": "🇬🇧 English",
+      "ru": "🇷🇺 Русский",
+      "updated": "✅ Language changed to {language}",
+      "error": "❌ Failed to change language. Please try again."
     },
     "errors": {
       "generic": "❌ An error occurred: {error}",
