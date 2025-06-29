@@ -84,7 +84,10 @@ class BetterSavedBot:
         # Conversation handler for Google Drive authentication
         # This must come BEFORE the general message handler
         conv_handler = ConversationHandler(
-            entry_points=[CommandHandler("connect_drive", self.connect_drive_command)],
+            entry_points=[
+                CommandHandler("connect_drive", self.connect_drive_command),
+                CallbackQueryHandler(self.connect_drive_command, pattern="^connect_drive$")
+            ],
             states={
                 self.WAITING_FOR_AUTH_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.process_auth_code)],
             },
@@ -804,48 +807,17 @@ class BetterSavedBot:
         await query.answer()
         
         if callback_data == "connect_drive":
-            # Create a new message with connect_drive instructions instead of trying to call the command
+            # Let the conversation handler handle this by calling connect_drive_command
+            # with the callback query instead of a command
             try:
-                # Generate authorization URL
-                auth_url, state = self.drive_manager.get_authorization_url()
-                
-                # Store state in user context for verification later
-                context.user_data['oauth_state'] = state
-                
-                # Send instructions with the auth URL in a single message using HTML formatting
-                instructions = (
-                    "🔄 <b>Connect to Google Drive</b>\n\n"
-                    "This will allow BetterSaved to access your Google Drive account and save your messages there.\n\n"
-                    "<i>Warning: this bot is in active development and has not completed Google's verification process. </i>"
-                    "<i>As such, it is limited to 100 users at this time. If you would like to use and test this bot, please contact the developer at @dmitry_helios.</i>\n\n"
-                    "1️⃣ Click the link below to authorize BetterSaved\n"
-                    "2️⃣ Sign in with your Google account\n"
-                    "3️⃣ Grant the requested permissions\n"
-                    "4️⃣ Copy the authorization code\n"
-                    "5️⃣ Send the code back to me\n\n"
-                )
-                
-                # Create HTML link
-                html_message = instructions + f'<a href="{auth_url}">Click here to connect</a>'
-                
-                # Send a new message instead of trying to edit the existing one
-                await query.message.reply_text(
-                    text=html_message,
-                    parse_mode='HTML',
-                    disable_web_page_preview=True
-                )
-                
-                # Set the conversation state
-                context.user_data['waiting_for_auth'] = True
-                #BUGFIX!!!
-                return self.WAITING_FOR_AUTH_CODE
-                
+                return await self.connect_drive_command(update, context)
             except Exception as e:
-                logger.error(f"Error starting Drive connection from button: {e}")
+                logger.error(f"Error in connect_drive button: {e}")
                 await query.message.reply_text(
                     "❌ Sorry, I couldn't start the Google Drive connection process. "
                     "Please try again later or use the /connect_drive command."
                 )
+                return
             
         elif callback_data == "settings":
             # Create settings menu with buttons
