@@ -852,7 +852,7 @@ class BetterSavedBot:
                  InlineKeyboardButton("🔌 Disconnect Drive", callback_data="disconnect_drive")],
                 [InlineKeyboardButton("📝 User Info", callback_data="user_info"),
                  InlineKeyboardButton("💾 Fix Spreadsheet", callback_data="fix_spreadsheet")],
-                [InlineKeyboardButton("🌐 " + MESSAGES[user_lang]["buttons"]["language"].replace("🌐 ", ""), callback_data="language_menu")],
+                [InlineKeyboardButton("🌐 Language", callback_data="language_menu")],
                 [InlineKeyboardButton("⚙️ Advanced Settings", callback_data="advanced_settings")],
                 [InlineKeyboardButton("💥 Delete Account", callback_data="nuke_user")],
                 [InlineKeyboardButton(MESSAGES[user_lang]["buttons"]["back"], callback_data="back_to_main")]
