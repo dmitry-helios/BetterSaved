@@ -994,8 +994,15 @@ class BetterSavedBot:
                 # Extract language code from callback_data (e.g., "set_lang_en" -> "en")
                 lang_code = callback_data.split("_")[2]
                 
+                # Get user data to get the user_id
+                user_data = self.db.get_user_by_telegram_id(telegram_id)
+                if not user_data:
+                    logger.error(f"User {telegram_id} not found in database")
+                    await query.message.reply_text("❌ User not found. Please try again.")
+                    return
+                    
                 # Update user's language preference in the database
-                success = self.db.update_user_language(telegram_id, lang_code)
+                success = self.db.update_user_language(user_data['user_id'], lang_code)
                 
                 if success:
                     # Get the language name in the selected language
