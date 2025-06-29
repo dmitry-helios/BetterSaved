@@ -542,43 +542,75 @@ class BetterSavedBot:
         
     async def connect_drive_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Start the Google Drive connection process."""
-        user = update.effective_user
-        telegram_id = str(user.id)
-        
         try:
-            # Generate authorization URL
-            auth_url, state = self.drive_manager.get_authorization_url()
+            telegram_id = str(update.effective_user.id)
+            logger.info(f"Starting Google Drive connection for user {telegram_id}")
             
-            # Store state in user context for verification later
+            # Get the authorization URL
+            auth_url, state = self.drive_manager.get_authorization_url()
             context.user_data['oauth_state'] = state
             
-            # Send instructions with the auth URL in a single message using HTML formatting
+            # Prepare the message with instructions
             instructions = (
-                "🔄 <b>Connect to Google Drive</b>\n\n"
-                "This will allow BetterSaved to access your Google Drive account and save your messages there.\n\n"
-                "<i>Warning: this bot is in active development and has not completed Google's verification process. </i>"
-                "<i>Unless your gmail account is whitelisted, you will not be able to connect your drive. </i>"
-                "<i>The test user count is limited to 100 users at this time. If you would like to use and test this bot, please contact the developer at @dmitry_helios.</i>\n\n"
-                "1️⃣ Click the link below to authorize BetterSaved\n"
-                "2️⃣ Sign in with your Google account\n"
-                "3️⃣ Grant the requested permissions\n"
-                "4️⃣ Copy the authorization code\n"
-                "5️⃣ Send the code back to me\n\n"
+                "🔗 <b>Connect Google Drive</b>\n\n"
+                "1. Click the link below to authorize access to your Google Drive\n"
+                "2. After allowing access, you'll get an authorization code\n"
+                "3. Copy that code and send it to me\n\n"
+                f"<a href='{auth_url}'>🔗 Click here to authorize Google Drive</a>\n\n"
+                "<i>This will create a 'BetterSaved' folder in your Google Drive where all your saved messages will be stored.</i>"
             )
             
-            # Create HTML link
-            html_message = instructions + f'<a href="{auth_url}">Click here to connect</a>'
-            
-            # Send everything in one message with HTML parsing
-            await update.message.reply_text(html_message, parse_mode='HTML', disable_web_page_preview=True)
-            return self.WAITING_FOR_AUTH_CODE
-            
+            # Send the message based on the update type
+            try:
+                if update.callback_query:
+                    # If called from a button click
+                    await update.callback_query.message.reply_text(
+                        text=instructions,
+                        parse_mode='HTML',
+                        disable_web_page_preview=True
+                    )
+                else:
+                    # If called from a command
+                    await update.message.reply_text(
+                        text=instructions,
+                        parse_mode='HTML',
+                        disable_web_page_preview=True
+                    )
+                
+                return self.WAITING_FOR_AUTH_CODE
+                
+            except Exception as e:
+                logger.error(f"Error sending message: {e}")
+                # Try alternative way if the first attempt fails
+                try:
+                    if update.effective_chat:
+                        await context.bot.send_message(
+                            chat_id=update.effective_chat.id,
+                            text=instructions,
+                            parse_mode='HTML',
+                            disable_web_page_preview=True
+                        )
+                        return self.WAITING_FOR_AUTH_CODE
+                except Exception as e2:
+                    logger.error(f"Failed to send message via alternative method: {e2}")
+                    raise e
+                    
         except Exception as e:
-            logger.error(f"Error starting Drive connection: {e}")
-            await update.message.reply_text(
-                "❌ Sorry, I couldn't start the Google Drive connection process. "
-                "Please try again later."
-            )
+            logger.error(f"Error in connect_drive_command: {e}", exc_info=True)
+            error_message = "❌ Sorry, I couldn't start the Google Drive connection process. Please try again later."
+            try:
+                if update.callback_query:
+                    await update.callback_query.message.reply_text(error_message)
+                elif update.message:
+                    await update.message.reply_text(error_message)
+                elif update.effective_chat:
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=error_message
+                    )
+            except Exception as e2:
+                logger.error(f"Failed to send error message: {e2}")
+            
             return ConversationHandler.END
     
     async def process_auth_code(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
