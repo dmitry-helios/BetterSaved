@@ -139,14 +139,14 @@ class BetterSavedBot:
         )
         
         # Welcome message caption with HTML formatting
-        welcome_caption = (f"{MESSAGES['en']['welcome']['title']}\n\n{MESSAGES['en']['welcome']['description']}")
+        welcome_caption = (f"{MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['title']}\n\n{MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['description']}")
         
         # Create inline keyboard buttons
         keyboard = [
-            [InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['connect_drive'], callback_data="connect_drive")],
-            [InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['settings'], callback_data="settings")],
-            [InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['about'], callback_data="about"), 
-             InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['donate'], callback_data="donate")]
+            [InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['connect_drive'], callback_data="connect_drive")],
+            [InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['settings'], callback_data="settings")],
+            [InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['about'], callback_data="about"), 
+             InlineKeyboardButton(MESSAGES[self.db.get_user_by_telegram_id(telegram_id)['lang']]['welcome']['buttons']['donate'], callback_data="donate")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
