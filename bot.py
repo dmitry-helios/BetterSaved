@@ -51,6 +51,14 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.errors import HttpError
 
+# Load the message texts
+def load_messages():
+    with open('message_text.json', 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+# Load all messages
+MESSAGES = load_messages()
+
 class BetterSavedBot:
     """Simple Telegram bot for BetterSaved with database integration."""
     
@@ -131,19 +139,14 @@ class BetterSavedBot:
         )
         
         # Welcome message caption with HTML formatting
-        welcome_caption = (
-            "<b>Hi! I am the Better Saved Messages bot.</b>\n\n"
-            "You can use me as your regular Saved Messages chat, but I can do more!\n\n"
-            "Log in to your Google Drive account and I will keep a detailed log of all your messages, "
-            "as well as download and save all your attachments to a folder on your Google Drive."
-        )
+        welcome_caption = (f"{MESSAGES['en']['welcome']['title']}\n\n{MESSAGES['en']['welcome']['description']}")
         
         # Create inline keyboard buttons
         keyboard = [
-            [InlineKeyboardButton("🔗 Connect Google Drive", callback_data="connect_drive")],
-            [InlineKeyboardButton("⚙️ Settings", callback_data="settings")],
-            [InlineKeyboardButton("ℹ️ About This Bot", callback_data="about"), 
-             InlineKeyboardButton("☕ Buy me a coffee", callback_data="donate")]
+            [InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['connect_drive'], callback_data="connect_drive")],
+            [InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['settings'], callback_data="settings")],
+            [InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['about'], callback_data="about"), 
+             InlineKeyboardButton(MESSAGES['en']['welcome']['buttons']['donate'], callback_data="donate")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -478,6 +481,7 @@ class BetterSavedBot:
                 f"🆔 User ID: `{db_user['user_id']}`\n"
                 f"🔢 Telegram ID: `{db_user['telegram_id']}`\n"
                 f"👤 Name: {db_user['name']}\n"
+                f"Language: {db_user['lang']}\n"
             )
             
             # Add Google Drive key info if available
