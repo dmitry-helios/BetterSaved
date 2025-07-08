@@ -222,23 +222,10 @@ class BetterSavedBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # Get the absolute path to the banner image
+        # Path to the banner image in the root folder
         banner_filename = 'bot-banner.png'
-        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media', banner_filename)
-        
-        # Log the absolute path for debugging
+        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), banner_filename)
         logger.info(f"Looking for banner at: {banner_path}")
-        
-        # Check if the banner file exists and is accessible
-        if not os.path.exists(banner_path):
-            logger.error(f"Banner file not found at: {banner_path}")
-            # List the contents of the media directory for debugging
-            media_dir = os.path.dirname(banner_path)
-            try:
-                contents = os.listdir(media_dir)
-                logger.info(f"Contents of {media_dir}: {contents}")
-            except Exception as e:
-                logger.error(f"Could not list contents of {media_dir}: {e}")
         
         try:
             # Send the welcome banner with caption and buttons

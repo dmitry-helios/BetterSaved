@@ -27,30 +27,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Verify media directory and banner file
-RUN echo "=== Debug: Contents of /app/media/ ===" && \
-    ls -la /app/media/ && \
-    echo "=== Checking banner file ===" && \
-    if [ -f "/app/media/bot-banner.png" ]; then \
-        echo "✅ Banner file exists"; \
-        ls -la /app/media/bot-banner.png; \
-        file /app/media/bot-banner.png; \
-    else \
-        echo "❌ Banner file not found"; \
-        echo "Current directory: $(pwd)"; \
-        find /app -name "*.png" | grep -i banner || echo "No banner files found in /app"; \
-    fi
-
 # Create a non-root user and set permissions
 RUN useradd -m myuser && \
     # Set ownership for app files
-    chown -R myuser:myuser /app && \
-    # Ensure banner is readable by all users
-    chmod 644 /app/media/bot-banner.png && \
-    # Verify permissions
-    echo "=== Final permissions check ===" && \
-    ls -la /app/media/ && \
-    ls -la /app/media/bot-banner.png
+    chown -R myuser:myuser /app
 
 # Switch to non-root user
 USER myuser
