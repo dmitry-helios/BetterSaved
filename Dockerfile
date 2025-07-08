@@ -24,6 +24,10 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Create media directory and set proper permissions
+RUN mkdir -p /app/media && \
+    chmod 755 /app/media
+
 # Copy the rest of the application
 COPY . .
 

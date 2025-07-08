@@ -30,10 +30,12 @@ bot-key.pem
 # Logs
 *.log
 
-# Media (optional, if you want to ignore all media uploads)
-# media/
+# Media directory is included in the build
+# media/*
+# !media/bot-banner.png
 
 # Ignore developer notes/readme
 
 dev_readme.md
+docker_readme.md
 *.bat
