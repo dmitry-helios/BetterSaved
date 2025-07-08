@@ -90,7 +90,7 @@
       }
     },
     "help": {
-      "text": "Here's what I can do:\n\n- Send me any text message, and I'll save it to your Google Sheets\n- Send me images, videos, audio, PDFs, and other files to save them to your Google Drive\n- Use /start to get started\n- Use /user to see your user information\n- Use /connect_drive to connect your Google Drive\n- Use /disconnect_drive to revoke Drive access\n- Use /fix_spreadsheet if you're having issues saving messages\n- Use /nuke_user to completely delete your account data\n- Use /help to see this message again"
+      "text": "Вот что я умею:\n\n- Отправь мне любое сообщение, и я сохраню его в таблицу в Google Sheets\n- Отправь мне фото, видео, аудио, PDF-файлы и другие файлы, чтобы сохранить их в Google Drive\n- Отправь мне /start, чтобы начать работу\n- Отправь мне /user, чтобы увидеть всю информацию о тебе\n- Отправь мне /connect_drive, чтобы подключить Google Drive\n- Отправь мне /disconnect_drive, чтобы отключить доступ к твоему Google Drive\n- Отправь мне /fix_spreadsheet, чтобы исправить проблемы с сохранением сообщений\n- Отправь мне /nuke_user, чтобы полностью удалить твои данные навсегда\n- Отправь мне /help, чтобы увидеть это сообщение снова"
     },
     "messages": {
       "connect_drive_required": "If you want your messages to be saved to your Google Drive, <b>you need to connect your Google Drive account first</b>.\n\nUse /connect_drive to get started.\n\nYou can still use this without a Drive connection just as you would your regular Saved Messages.",
