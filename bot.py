@@ -5,9 +5,11 @@ testin1g
 import logging
 import os
 import json
+import logging
 import traceback
+from typing import Dict, Any, Optional, List, Union
 from datetime import datetime
-from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -51,6 +53,14 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from googleapiclient.errors import HttpError
 
+# Load the message texts
+def load_messages():
+    with open('message_text.json', 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+# Load all messages
+MESSAGES = load_messages()
+
 class BetterSavedBot:
     """Simple Telegram bot for BetterSaved with database integration."""
     
@@ -73,8 +83,9 @@ class BetterSavedBot:
         self._register_handlers()
         
     def _register_handlers(self):
-        """Register command and message handlers."""
+        """Register all command and message handlers."""
         # Command handlers
+        self.application.add_handler(CommandHandler("test_banner", self.test_banner))
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
         self.application.add_handler(CommandHandler("user", self.user_command))
@@ -120,6 +131,64 @@ class BetterSavedBot:
         
         logger.info("All handlers registered successfully")
     
+    async def test_banner(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test command to verify banner file access."""
+        user = update.effective_user
+        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media', 'bot-banner.png')
+        
+        # Check if file exists and is accessible
+        response = ["🔍 Banner File Test Results:", "", f"Looking for banner at: {banner_path}", ""]
+        
+        if not os.path.exists(banner_path):
+            response.append("❌ Error: Banner file does not exist at the specified path")
+            # Try to find the file elsewhere
+            for root, _, files in os.walk('/app'):
+                if 'bot-banner.png' in files:
+                    response.append(f"⚠️  Found banner at: {os.path.join(root, 'bot-banner.png')}")
+            response.append("")
+            response.append("📁 Directory contents:")
+            try:
+                media_dir = os.path.dirname(banner_path)
+                response.extend([f"  - {f}" for f in os.listdir(media_dir)])
+            except Exception as e:
+                response.append(f"  ❌ Could not list directory: {e}")
+        else:
+            response.append("✅ Banner file exists!")
+            try:
+                # Try to read the file
+                with open(banner_path, 'rb') as f:
+                    f.read(4)  # Read first 4 bytes to check if file is readable
+                response.append("✅ File is readable")
+                
+                # Get file stats
+                stat = os.stat(banner_path)
+                response.append(f"📊 File stats:")
+                response.append(f"  - Size: {stat.st_size} bytes")
+                response.append(f"  - Permissions: {oct(stat.st_mode)[-3:]}")
+                
+                # Try to send the banner
+                response.append("")
+                response.append("🔄 Attempting to send banner...")
+                try:
+                    with open(banner_path, 'rb') as banner_file:
+                        await update.message.reply_photo(
+                            photo=banner_file,
+                            caption="🎉 Banner file found and sent successfully!"
+                        )
+                    response.append("✅ Successfully sent banner!")
+                except Exception as e:
+                    response.append(f"❌ Failed to send banner: {str(e)}")
+                    response.append(f"Error type: {type(e).__name__}")
+                    response.append("")
+                    response.append("Stack trace:")
+                    response.append(traceback.format_exc())
+                    
+            except Exception as e:
+                response.append(f"❌ Error reading file: {str(e)}")
+        
+        # Send the test results
+        await update.message.reply_text("\n".join(response))
+
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Send a message when the command /start is issued and register the user."""
         user = update.effective_user
@@ -130,41 +199,58 @@ class BetterSavedBot:
             name=user.full_name or user.first_name
         )
         
-        # Welcome message caption with HTML formatting
-        welcome_caption = (
-            "<b>Hi! I am the Better Saved Messages bot.</b>\n\n"
-            "You can use me as your regular Saved Messages chat, but I can do more!\n\n"
-            "Log in to your Google Drive account and I will keep a detailed log of all your messages, "
-            "as well as download and save all your attachments to a folder on your Google Drive."
-        )
+        # Get user's language preference from database
+        user_data = self.db.get_user_by_telegram_id(str(user.id))
+        user_lang = user_data.get('lang', 'en') if user_data else 'en'
         
-        # Create inline keyboard buttons
+        # Get localized welcome message and buttons
+        welcome_title = MESSAGES[user_lang]['welcome']['title']
+        welcome_description = MESSAGES[user_lang]['welcome']['description']
+        welcome_buttons = MESSAGES[user_lang]['welcome']['buttons']
+        
+        # Welcome message caption with HTML formatting using user's language
+        welcome_caption = f"{welcome_title}\n\n{welcome_description}"
+        
+        # Create inline keyboard buttons using user's language
         keyboard = [
-            [InlineKeyboardButton("🔗 Connect Google Drive", callback_data="connect_drive")],
-            [InlineKeyboardButton("⚙️ Settings", callback_data="settings")],
-            [InlineKeyboardButton("ℹ️ About This Bot", callback_data="about"), 
-             InlineKeyboardButton("☕ Buy me a coffee", callback_data="donate")]
+            [InlineKeyboardButton(welcome_buttons['connect_drive'], callback_data="connect_drive")],
+            [InlineKeyboardButton(welcome_buttons['settings'], callback_data="settings")],
+            [
+                InlineKeyboardButton(welcome_buttons['about'], callback_data="about"),
+                InlineKeyboardButton(welcome_buttons['donate'], callback_data="donate")
+            ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # Path to the banner image
-        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media', 'bot-banner.png')
+        # Path to the banner image in the root folder
+        banner_filename = 'bot-banner.png'
+        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), banner_filename)
+        logger.info(f"Looking for banner at: {banner_path}")
         
         try:
             # Send the welcome banner with caption and buttons
             with open(banner_path, 'rb') as banner_file:
+                # Read the first few bytes to verify the file is accessible
+                banner_file.read(4)  # Read first 4 bytes to verify file is readable
+                banner_file.seek(0)  # Reset file pointer
+                
+                logger.info(f"Sending welcome banner to user {user.id}")
                 await update.message.reply_photo(
                     photo=banner_file,
                     caption=welcome_caption,
                     parse_mode='HTML',
                     reply_markup=reply_markup
                 )
-            logger.info(f"Sent welcome banner to user {user.id}")
+                logger.info(f"Successfully sent welcome banner to user {user.id}")
         except Exception as e:
             # Fallback to text-only message if image sending fails
-            logger.error(f"Failed to send welcome banner: {e}")
+            error_msg = f"Failed to send welcome banner: {str(e)}. Path: {banner_path}"
+            if hasattr(e, 'args') and e.args:
+                error_msg += f"\nError details: {e.args}"
+            logger.error(error_msg, exc_info=True)
+            
             await update.message.reply_text(
-                f"Hi {user.first_name}! {welcome_caption}",
+                f"👋 Hi {user.first_name}! {welcome_caption}",
                 parse_mode='HTML',
                 reply_markup=reply_markup
             )
@@ -478,6 +564,7 @@ class BetterSavedBot:
                 f"🆔 User ID: `{db_user['user_id']}`\n"
                 f"🔢 Telegram ID: `{db_user['telegram_id']}`\n"
                 f"👤 Name: {db_user['name']}\n"
+                f"Language: {db_user['lang']}\n"
             )
             
             # Add Google Drive key info if available
@@ -825,6 +912,51 @@ class BetterSavedBot:
         
         return ConversationHandler.END
         
+    async def show_settings_menu(self, query, telegram_id, message_text=None):
+        """Helper method to show the settings menu."""
+        try:
+            # Get user's current language
+            user_data = self.db.get_user_by_telegram_id(telegram_id)
+            user_lang = user_data.get('lang', 'en') if user_data else 'en'
+            
+            keyboard = [
+                [InlineKeyboardButton("🔗 Connect Drive", callback_data="connect_drive"),
+                 InlineKeyboardButton("🔌 Disconnect Drive", callback_data="disconnect_drive")],
+                [InlineKeyboardButton("📝 User Info", callback_data="user_info"),
+                 InlineKeyboardButton("💾 Fix Spreadsheet", callback_data="fix_spreadsheet")],
+                [InlineKeyboardButton("🌐 Language", callback_data="language_menu")],
+                [InlineKeyboardButton("⚙️ Advanced Settings", callback_data="advanced_settings")],
+                [InlineKeyboardButton("💥 Delete Account", callback_data="nuke_user")],
+                [InlineKeyboardButton(MESSAGES[user_lang]["buttons"]["back"], callback_data="back_to_main")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            # Default message if none provided
+            if not message_text:
+                message_text = "⚙️ <b>" + MESSAGES[user_lang]["buttons"]["settings"] + "</b>\n\n" + \
+                             (MESSAGES[user_lang].get("settings", {}).get("select_option", "Select an option from the menu below:"))
+            
+            # Try to edit the message, if it fails, send a new one
+            try:
+                await query.edit_message_text(
+                    text=message_text,
+                    parse_mode='HTML',
+                    reply_markup=reply_markup
+                )
+            except Exception as e:
+                logger.error(f"Error editing message for settings: {e}")
+                # If editing fails, send a new message
+                await query.message.reply_text(
+                    text=message_text,
+                    parse_mode='HTML',
+                    reply_markup=reply_markup
+                )
+        except Exception as e:
+            logger.error(f"Error in show_settings_menu: {e}")
+            await query.message.reply_text(
+                "❌ Something went wrong with the settings menu. Please try again."
+            )
+    
     async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle button clicks from inline keyboards."""
         query = update.callback_query
@@ -854,21 +986,27 @@ class BetterSavedBot:
         elif callback_data == "settings":
             # Create settings menu with buttons
             try:
+                # Get user's current language
+                user_data = self.db.get_user_by_telegram_id(telegram_id)
+                user_lang = user_data.get('lang', 'en') if user_data else 'en'
+                
                 keyboard = [
                     [InlineKeyboardButton("🔗 Connect Drive", callback_data="connect_drive"),
                      InlineKeyboardButton("🔌 Disconnect Drive", callback_data="disconnect_drive")],
                     [InlineKeyboardButton("📝 User Info", callback_data="user_info"),
                      InlineKeyboardButton("💾 Fix Spreadsheet", callback_data="fix_spreadsheet")],
+                    [InlineKeyboardButton("🌐 Language", callback_data="language_menu")],
                     [InlineKeyboardButton("⚙️ Advanced Settings", callback_data="advanced_settings")],
                     [InlineKeyboardButton("💥 Delete Account", callback_data="nuke_user")],
-                    [InlineKeyboardButton("⬅️ Back", callback_data="back_to_main")]
+                    [InlineKeyboardButton(MESSAGES[user_lang]["buttons"]["back"], callback_data="back_to_main")]
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
                 # Try to edit the message, if it fails, send a new one
                 try:
                     await query.edit_message_text(
-                        text="⚙️ <b>Settings</b>\n\nSelect an option from the menu below:",
+                        text="⚙️ <b>" + MESSAGES[user_lang]["buttons"]["settings"] + "</b>\n\n" + 
+                             (MESSAGES[user_lang].get("settings", {}).get("select_option", "Select an option from the menu below:")),
                         parse_mode='HTML',
                         reply_markup=reply_markup
                     )
@@ -876,7 +1014,8 @@ class BetterSavedBot:
                     logger.error(f"Error editing message for settings: {e}")
                     # If editing fails, send a new message
                     await query.message.reply_text(
-                        text="⚙️ <b>Settings</b>\n\nSelect an option from the menu below:",
+                        text="⚙️ <b>" + MESSAGES[user_lang]["buttons"]["settings"] + "</b>\n\n" + 
+                             (MESSAGES[user_lang].get("settings", {}).get("select_option", "Select an option from the menu below:")),
                         parse_mode='HTML',
                         reply_markup=reply_markup
                     )
@@ -885,33 +1024,99 @@ class BetterSavedBot:
                 await query.message.reply_text(
                     "❌ Something went wrong with the settings menu. Please try again."
                 )
+                
+        elif callback_data == "language_menu":
+            # Show language selection menu
+            try:
+                # Get user's current language
+                user_data = self.db.get_user_by_telegram_id(telegram_id)
+                user_lang = user_data.get('lang', 'en') if user_data else 'en'
+                
+                keyboard = [
+                    [InlineKeyboardButton(MESSAGES[user_lang]["language"]["en"], callback_data="set_lang_en")],
+                    [InlineKeyboardButton(MESSAGES[user_lang]["language"]["ru"], callback_data="set_lang_ru")],
+                    [InlineKeyboardButton(MESSAGES[user_lang]["buttons"]["back"], callback_data="settings")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                # Try to edit the message, if it fails, send a new one
+                try:
+                    await query.edit_message_text(
+                        text=MESSAGES[user_lang]["language"]["select"],
+                        parse_mode='HTML',
+                        reply_markup=reply_markup
+                    )
+                except Exception as e:
+                    logger.error(f"Error editing message for language menu: {e}")
+                    # If editing fails, send a new message
+                    await query.message.reply_text(
+                        text=MESSAGES[user_lang]["language"]["select"],
+                        parse_mode='HTML',
+                        reply_markup=reply_markup
+                    )
+            except Exception as e:
+                logger.error(f"Error in language menu: {e}")
+                await query.message.reply_text(
+                    "❌ Something went wrong with the language menu. Please try again."
+                )
+                
+        elif callback_data.startswith("set_lang_"):
+            # Handle language selection
+            try:
+                # Extract language code from callback_data (e.g., "set_lang_en" -> "en")
+                lang_code = callback_data.split("_")[2]
+                
+                # Get user data to get the user_id
+                user_data = self.db.get_user_by_telegram_id(telegram_id)
+                if not user_data:
+                    logger.error(f"User {telegram_id} not found in database")
+                    await query.message.reply_text("❌ User not found. Please try again.")
+                    return
+                    
+                # Update user's language preference in the database
+                success = self.db.update_user_language(user_data['user_id'], lang_code)
+                
+                if success:
+                    # Get the language name in the selected language
+                    lang_name = MESSAGES[lang_code]["language"][lang_code]
+                    
+                    # Show success message in the new language
+                    success_message = MESSAGES[lang_code]["language"]["updated"].format(language=lang_name)
+                    
+                    # Go back to settings menu
+                    await self.show_settings_menu(query, telegram_id, success_message)
+                else:
+                    # If update failed, show error in current language
+                    user_data = self.db.get_user_by_telegram_id(telegram_id)
+                    user_lang = user_data.get('lang', 'en') if user_data else 'en'
+                    await query.message.reply_text(
+                        MESSAGES[user_lang]["language"]["error"]
+                    )
+            except Exception as e:
+                logger.error(f"Error setting language: {e}")
+                await query.message.reply_text(
+                    "❌ An error occurred while updating your language preference. Please try again."
+                )
             
         elif callback_data == "about":
             try:
-                # About message with information about the bot
-                about_text = (
+                # Get user's current language
+                user_data = self.db.get_user_by_telegram_id(telegram_id)
+                user_lang = user_data.get('lang', 'en') if user_data else 'en'
+                
+                # Get localized about text
+                about_text = MESSAGES[user_lang].get("about", {}).get("text", 
                     "ℹ️ <b>About BetterSaved Bot</b>\n\n"
                     "BetterSaved is a Telegram bot that enhances your Saved Messages experience by automatically "
                     "saving your messages, photos, videos, documents and other files to your Google Drive.\n\n"
                     "This bot serves as a proof of concept for a way to give the control over your notes and "
                     "messenger-based storage back to you, without sacrificing the usability of a 'dump chat' "
-                    "in your messenger of choice.\n\n"
-                    "<b>Developer:</b> @dmitry_helios\n"
-                    "<b>Version:</b> 0.1.0\n\n"
-                    "<b>Planned Features in Near Future:</b>\n"
-                    "• AI Message Categorization\n"
-                    "• Support for various storage providers (OneDrive, Local storage etc.)\n"
-                    "• AI message search and retrieval\n\n"
-                    "<b>Features down the pipeline:</b>\n"
-                    "• WhatsApp, IG, FB messenger bots with united storage\n"
-                    "• Self-hosted LLM support\n"
-                    "• Dedicated WebUI for note management\n"
-                    "• Integration with password management apps\n"
-                    "• And more!\n\n"
-                    "Please contact me if you have any suggestions or feedback, or would like to beta-test the bot's Google Drive integration."
+                    "in your messenger of choice."
                 )
                 
-                keyboard = [[InlineKeyboardButton("⬅️ Back", callback_data="back_to_main")]]
+                # Get back button text
+                back_button_text = MESSAGES[user_lang].get("buttons", {}).get("back", "⬅️ Back")
+                keyboard = [[InlineKeyboardButton(back_button_text, callback_data="back_to_main")]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
                 # Try to edit the message, if it fails, send a new one
@@ -932,13 +1137,17 @@ class BetterSavedBot:
             except Exception as e:
                 logger.error(f"Error in about button: {e}")
                 await query.message.reply_text(
-                    "❌ Something went wrong with the about information. Please try again."
+                    MESSAGES.get(user_lang, {}).get("errors", {}).get("generic", "❌ An error occurred. Please try again.")
                 )
             
         elif callback_data == "donate":
             try:
-                # Donate message (placeholder for now)
-                donate_text = (
+                # Get user's current language
+                user_data = self.db.get_user_by_telegram_id(telegram_id)
+                user_lang = user_data.get('lang', 'en') if user_data else 'en'
+                
+                # Get localized donate text
+                donate_text = MESSAGES[user_lang].get("donate", {}).get("text", 
                     "☕ <b>Buy Me a Coffee</b>\n\n"
                     "Thank you for considering supporting the development of BetterSaved!\n\n"
                     "<a href='https://ko-fi.com/helios_xii'>Send a donation through Ko-Fi</a>\n"
@@ -948,7 +1157,9 @@ class BetterSavedBot:
                     "Your support helps keep the bot running and enables new features."
                 )
                 
-                keyboard = [[InlineKeyboardButton("⬅️ Back", callback_data="back_to_main")]]
+                # Get back button text
+                back_button_text = MESSAGES[user_lang].get("buttons", {}).get("back", "⬅️ Back")
+                keyboard = [[InlineKeyboardButton(back_button_text, callback_data="back_to_main")]]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
                 # Try to edit the message, if it fails, send a new one
@@ -956,7 +1167,8 @@ class BetterSavedBot:
                     await query.edit_message_text(
                         text=donate_text,
                         parse_mode='HTML',
-                        reply_markup=reply_markup
+                        reply_markup=reply_markup,
+                        disable_web_page_preview=True
                     )
                 except Exception as e:
                     logger.error(f"Error editing message for donate: {e}")
@@ -964,29 +1176,36 @@ class BetterSavedBot:
                     await query.message.reply_text(
                         text=donate_text,
                         parse_mode='HTML',
-                        reply_markup=reply_markup
+                        reply_markup=reply_markup,
+                        disable_web_page_preview=True
                     )
             except Exception as e:
                 logger.error(f"Error in donate button: {e}")
                 await query.message.reply_text(
-                    "❌ Something went wrong with the donation information. Please try again."
+                    MESSAGES.get(user_lang, {}).get("errors", {}).get("generic", "❌ An error occurred. Please try again.")
                 )
             
         elif callback_data == "back_to_main":
             try:
-                # Return to the main menu
-                welcome_caption = (
-                    "<b>Hi! I am the Better Saved Messages bot.</b>\n\n"
-                    "You can use me as your regular Saved Messages chat, but I can do more!\n\n"
-                    "Log in to your Google Drive account and I will keep a detailed log of all your messages, "
-                    "as well as download and save all your attachments to a folder on your Google Drive."
-                )
+                # Get user's current language
+                user_data = self.db.get_user_by_telegram_id(telegram_id)
+                user_lang = user_data.get('lang', 'en') if user_data else 'en'
+                
+                # Get localized welcome message and buttons
+                welcome_title = MESSAGES[user_lang]["welcome"]["title"]
+                welcome_desc = MESSAGES[user_lang]["welcome"]["description"]
+                welcome_caption = f"<b>{welcome_title}</b>\n\n{welcome_desc}"
+                
+                # Get localized button texts
+                buttons = MESSAGES[user_lang]["welcome"]["buttons"]
                 
                 keyboard = [
-                    [InlineKeyboardButton("🔗 Connect Google Drive", callback_data="connect_drive")],
-                    [InlineKeyboardButton("⚙️ Settings", callback_data="settings")],
-                    [InlineKeyboardButton("ℹ️ About This Bot", callback_data="about"), 
-                     InlineKeyboardButton("☕ Buy me a coffee", callback_data="donate")]
+                    [InlineKeyboardButton(buttons["connect_drive"], callback_data="connect_drive")],
+                    [InlineKeyboardButton(buttons["settings"], callback_data="settings")],
+                    [
+                        InlineKeyboardButton(buttons["about"], callback_data="about"),
+                        InlineKeyboardButton(buttons["donate"], callback_data="donate")
+                    ]
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
@@ -1008,7 +1227,7 @@ class BetterSavedBot:
             except Exception as e:
                 logger.error(f"Error in back_to_main button: {e}")
                 await query.message.reply_text(
-                    "❌ Something went wrong returning to the main menu. Please try again or use /start."
+                    MESSAGES.get(user_lang, {}).get("errors", {}).get("generic", "❌ An error occurred. Please try again.")
                 )
             
         elif callback_data == "disconnect_drive":

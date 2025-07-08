@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 """
-Main entry point for the Echo Telegram bot. test
+Main entry point for the BetterSaved Telegram bot.
 """
 import logging
 import os
-import sys
 from dotenv import load_dotenv
 
 from bot import BetterSavedBot
@@ -18,11 +17,8 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Start the bot."""
-    # Determine which environment to load
-    env_file = ".env.test"  # Default to test
-    if len(sys.argv) > 1 and sys.argv[1].lower() == "prod":
-        env_file = ".env.prod"
-    load_dotenv(env_file)
+    # Load environment variables from .env file if it exists
+    load_dotenv()
     
     # Get the token from environment variable
     token = os.getenv("TELEGRAM_TOKEN")

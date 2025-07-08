@@ -1,0 +1,160 @@
+{
+  "en": {
+    "welcome": {
+      "title": "Hi! I am the Better Saved Messages bot.",
+      "description": "You can use me as your regular Saved Messages chat, but I can do more!\n\nLog in to your Google Drive account and I will keep a detailed log of all your messages, as well as download and save all your attachments to a folder on your Google Drive.",
+      "buttons": {
+        "connect_drive": "🔗 Connect Google Drive",
+        "settings": "⚙️ Settings",
+        "about": "ℹ️ About This Bot",
+        "donate": "☕ Buy me a coffee"
+      }
+    },
+    "help": {
+      "text": "Here's what I can do:\n\n- Send me any text message, and I'll save it to your Google Sheets\n- Send me images, videos, audio, PDFs, and other files to save them to your Google Drive\n- Use /start to get started\n- Use /user to see your user information\n- Use /connect_drive to connect your Google Drive\n- Use /disconnect_drive to revoke Drive access\n- Use /fix_spreadsheet if you're having issues saving messages\n- Use /nuke_user to completely delete your account data\n- Use /help to see this message again"
+    },
+    "messages": {
+      "connect_drive_required": "If you want your messages to be saved to your Google Drive, <b>you need to connect your Google Drive account first</b>.\n\nUse /connect_drive to get started.\n\nYou can still use this without a Drive connection just as you would your regular Saved Messages.",
+      "unsupported_attachment": "I'm a very young bot and I can't deal with {attachment_type}{document_info} attachments yet.\n\nIn the future, I'll be able to save {attachment_type} files to your Google Drive, but for now, please send text messages only.",
+      "no_drive_token": "You need to connect your Google Drive first using /connect_drive.",
+      "drive_connected": "✅ Successfully connected to Google Drive! Your messages will now be saved to your Google Drive.",
+      "drive_disconnected": "✅ Successfully disconnected Google Drive. Your messages will no longer be saved to Google Drive.",
+      "drive_not_connected": "You don't have Google Drive connected. Use /connect_drive to connect it.",
+      "auth_cancelled": "Google Drive connection cancelled.",
+      "auth_code_required": "Please send me the authorization code you received from Google.",
+      "auth_code_invalid": "Invalid authorization code. Please try the /connect_drive command again.",
+      "auth_error": "An error occurred while connecting to Google Drive: {error}",
+      "user_info": "👤 <b>User Information</b>\n\n🆔 <b>ID:</b> {user_id}\n👤 <b>Name:</b> {user_name}\n📅 <b>Member since:</b> {join_date}\n\n📊 <b>Messages saved:</b> {message_count}\n🔗 <b>Google Drive:</b> {drive_status}",
+      "drive_status_connected": "✅ Connected",
+      "drive_status_not_connected": "❌ Not connected",
+      "nuke_confirmation": "⚠️ <b>WARNING: This will delete ALL your data!</b> ⚠️\n\nThis action will:\n- Disconnect your Google Drive\n- Delete all your messages from our database\n- Remove all your files from Google Drive\n\n<b>This cannot be undone!</b>\n\nType 'DELETE MY ACCOUNT' to confirm.",
+      "nuke_cancelled": "Account deletion cancelled. Your data is safe.",
+      "nuke_success": "Your account and all associated data have been deleted. Thank you for using BetterSaved!",
+      "nuke_invalid_confirmation": "Invalid confirmation. Account deletion cancelled.",
+      "fix_spreadsheet_success": "Spreadsheet information has been fixed. You should now be able to save messages again.",
+      "fix_spreadsheet_error": "An error occurred while fixing the spreadsheet: {error}",
+      "file_uploaded": "✅ File saved to Google Drive: {file_name}\n🔗 <a href=\"{file_url}\">Open in Drive</a>",
+      "file_upload_error": "❌ Error saving file to Google Drive: {error}",
+      "message_saved": "💾 Message saved to Google Sheets\n🔗 <a href=\"{spreadsheet_url}\">Open in Google Sheets</a>"
+    },
+    "disconnect": {
+      "confirmation": "⚠️ <b>Are you sure you want to disconnect Google Drive?</b>\n\nThis will:\n• Stop saving new messages to Google Drive\n• Revoke this app's access to your Google account\n• <b>Not</b> delete any files already saved to your Google Drive\n\nYou can reconnect at any time with /connect_drive.",
+      "success": "✅ Your Google Drive has been disconnected. Your messages will no longer be saved to Google Drive.",
+      "error": "❌ Failed to disconnect your Google Drive. Please try again later.",
+      "not_connected": "❌ You don't have Google Drive connected.",
+      "confirm_button": "✅ Yes, disconnect",
+      "cancel_button": "❌ Cancel"
+    },
+    "nuke_user": {
+      "confirmation": "⚠️ <b>DANGER ZONE - ACCOUNT DELETION</b> ⚠️\n\nYou are about to delete your account and all associated data from BetterSaved.\n\n<b>This action cannot be undone!</b>\n\n• All your settings will be deleted\n• Your Google Drive connection will be removed\n• Your saved preferences will be lost\n\n<i>Note: This will NOT delete any files already saved to your Google Drive.</i>\n\nTo confirm deletion, type 'DELETE MY ACCOUNT' (without quotes).",
+      "success": "💥 Your account has been successfully deleted. All your data has been removed from our system.\n\nIf you change your mind, you can always start fresh by sending /start again.",
+      "error": "❌ An error occurred while trying to delete your account. Please try again later.",
+      "cancelled": "Account deletion cancelled. Your data remains safe and unchanged.",
+      "invalid_confirmation": "Invalid confirmation. Account deletion cancelled.",
+      "no_account": "❌ You don't have an account to delete.",
+      "confirm_text": "DELETE MY ACCOUNT"
+    },
+    "buttons": {
+      "cancel": "❌ Cancel",
+      "back": "🔙 Back",
+      "confirm": "✅ Confirm",
+      "disconnect": "❌ Disconnect",
+      "connect": "🔗 Connect",
+      "settings": "⚙️ Settings",
+      "language": "🌐 Language"
+    },
+    "language": {
+      "select": "🌐 Select your language",
+      "en": "🇬🇧 English",
+      "ru": "🇷🇺 Русский",
+      "updated": "✅ Language changed to {language}",
+      "error": "❌ Failed to change language. Please try again."
+    },
+    "errors": {
+      "generic": "❌ An error occurred: {error}",
+      "unauthorized": "❌ You are not authorized to perform this action.",
+      "not_implemented": "❌ This feature is not implemented yet.",
+      "invalid_command": "❌ Invalid command. Use /help to see available commands.",
+      "rate_limited": "⚠️ You're doing that too fast. Please try again in a few seconds."
+    }
+  },
+  "ru": {
+    "welcome": {
+      "title": "<b>Привет! Я - бот Better Saved Messages.</b>",
+      "description": "Можешь использовать меня как обычный чат для сохранения сообщений, но я могу делать гораздо больше!\n\nВойди в твой аккаунт Google Drive и я сохраню подробный лог всех твоих сообщений, а также загружу и сохраню все твои вложения в папку на твоем Google Drive.",
+      "buttons": {
+        "connect_drive": "🔗 Подключить Google Drive",
+        "settings": "⚙️ Настройки",
+        "about": "ℹ️ О боте",
+        "donate": "☕ Угостить автора кофе"
+      }
+    },
+    "help": {
+      "text": "Вот что я умею:\n\n- Отправь мне любое сообщение, и я сохраню его в таблицу в Google Sheets\n- Отправь мне фото, видео, аудио, PDF-файлы и другие файлы, чтобы сохранить их в Google Drive\n- Отправь мне /start, чтобы начать работу\n- Отправь мне /user, чтобы увидеть всю информацию о тебе\n- Отправь мне /connect_drive, чтобы подключить Google Drive\n- Отправь мне /disconnect_drive, чтобы отключить доступ к твоему Google Drive\n- Отправь мне /fix_spreadsheet, чтобы исправить проблемы с сохранением сообщений\n- Отправь мне /nuke_user, чтобы полностью удалить твои данные навсегда\n- Отправь мне /help, чтобы увидеть это сообщение снова"
+    },
+    "messages": {
+      "connect_drive_required": "If you want your messages to be saved to your Google Drive, <b>you need to connect your Google Drive account first</b>.\n\nUse /connect_drive to get started.\n\nYou can still use this without a Drive connection just as you would your regular Saved Messages.",
+      "unsupported_attachment": "I'm a very young bot and I can't deal with {attachment_type}{document_info} attachments yet.\n\nIn the future, I'll be able to save {attachment_type} files to your Google Drive, but for now, please send text messages only.",
+      "no_drive_token": "You need to connect your Google Drive first using /connect_drive.",
+      "drive_connected": "✅ Successfully connected to Google Drive! Your messages will now be saved to your Google Drive.",
+      "drive_disconnected": "✅ Successfully disconnected Google Drive. Your messages will no longer be saved to Google Drive.",
+      "drive_not_connected": "You don't have Google Drive connected. Use /connect_drive to connect it.",
+      "auth_cancelled": "Google Drive connection cancelled.",
+      "auth_code_required": "Please send me the authorization code you received from Google.",
+      "auth_code_invalid": "Invalid authorization code. Please try the /connect_drive command again.",
+      "auth_error": "An error occurred while connecting to Google Drive: {error}",
+      "user_info": "👤 <b>User Information</b>\n\n🆔 <b>ID:</b> {user_id}\n👤 <b>Name:</b> {user_name}\n📅 <b>Member since:</b> {join_date}\n\n📊 <b>Messages saved:</b> {message_count}\n🔗 <b>Google Drive:</b> {drive_status}",
+      "drive_status_connected": "✅ Connected",
+      "drive_status_not_connected": "❌ Not connected",
+      "nuke_confirmation": "⚠️ <b>WARNING: This will delete ALL your data!</b> ⚠️\n\nThis action will:\n- Disconnect your Google Drive\n- Delete all your messages from our database\n- Remove all your files from Google Drive\n\n<b>This cannot be undone!</b>\n\nType 'DELETE MY ACCOUNT' to confirm.",
+      "nuke_cancelled": "Account deletion cancelled. Your data is safe.",
+      "nuke_success": "Your account and all associated data have been deleted. Thank you for using BetterSaved!",
+      "nuke_invalid_confirmation": "Invalid confirmation. Account deletion cancelled.",
+      "fix_spreadsheet_success": "Spreadsheet information has been fixed. You should now be able to save messages again.",
+      "fix_spreadsheet_error": "An error occurred while fixing the spreadsheet: {error}",
+      "file_uploaded": "✅ File saved to Google Drive: {file_name}\n🔗 <a href=\"{file_url}\">Open in Drive</a>",
+      "file_upload_error": "❌ Error saving file to Google Drive: {error}",
+      "message_saved": "💾 Message saved to Google Sheets\n🔗 <a href=\"{spreadsheet_url}\">Open in Google Sheets</a>"
+    },
+    "disconnect": {
+      "confirmation": "⚠️ <b>Are you sure you want to disconnect Google Drive?</b>\n\nThis will:\n• Stop saving new messages to Google Drive\n• Revoke this app's access to your Google account\n• <b>Not</b> delete any files already saved to your Google Drive\n\nYou can reconnect at any time with /connect_drive.",
+      "success": "✅ Your Google Drive has been disconnected. Your messages will no longer be saved to Google Drive.",
+      "error": "❌ Failed to disconnect your Google Drive. Please try again later.",
+      "not_connected": "❌ You don't have Google Drive connected.",
+      "confirm_button": "✅ Yes, disconnect",
+      "cancel_button": "❌ Cancel"
+    },
+    "nuke_user": {
+      "confirmation": "⚠️ <b>DANGER ZONE - ACCOUNT DELETION</b> ⚠️\n\nYou are about to delete your account and all associated data from BetterSaved.\n\n<b>This action cannot be undone!</b>\n\n• All your settings will be deleted\n• Your Google Drive connection will be removed\n• Your saved preferences will be lost\n\n<i>Note: This will NOT delete any files already saved to your Google Drive.</i>\n\nTo confirm deletion, type 'DELETE MY ACCOUNT' (without quotes).",
+      "success": "💥 Your account has been successfully deleted. All your data has been removed from our system.\n\nIf you change your mind, you can always start fresh by sending /start again.",
+      "error": "❌ An error occurred while trying to delete your account. Please try again later.",
+      "cancelled": "Account deletion cancelled. Your data remains safe and unchanged.",
+      "invalid_confirmation": "Invalid confirmation. Account deletion cancelled.",
+      "no_account": "❌ You don't have an account to delete.",
+      "confirm_text": "DELETE MY ACCOUNT"
+    },
+    "buttons": {
+      "cancel": "❌ Отмена",
+      "back": "🔙 Назад",
+      "confirm": "✅ Подтвердить",
+      "disconnect": "❌ Отключить",
+      "connect": "🔗 Подключить",
+      "settings": "⚙️ Настройки",
+      "language": "🌐 Язык"
+    },
+    "language": {
+      "select": "🌐 Выберите язык",
+      "en": "🇬🇧 English",
+      "ru": "🇷🇺 Русский",
+      "updated": "✅ Язык изменен на {language}",
+      "error": "❌ Не удалось изменить язык. Пожалуйста, попробуйте снова."
+    },
+    "errors": {
+      "generic": "❌ An error occurred: {error}",
+      "unauthorized": "❌ You are not authorized to perform this action.",
+      "not_implemented": "❌ This feature is not implemented yet.",
+      "invalid_command": "❌ Invalid command. Use /help to see available commands.",
+      "rate_limited": "⚠️ You're doing that too fast. Please try again in a few seconds."
+    }
+  }
+}

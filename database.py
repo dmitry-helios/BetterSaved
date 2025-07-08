@@ -47,7 +47,8 @@ class Database:
                 folder_url TEXT,
                 spreadsheet_id TEXT,
                 spreadsheet_url TEXT,
-                connect_msg_shown INTEGER DEFAULT 0
+                connect_msg_shown INTEGER DEFAULT 0,
+                lang TEXT DEFAULT 'en'
             )
             ''')
             self.conn.commit()
@@ -55,6 +56,27 @@ class Database:
         except sqlite3.Error as e:
             logger.error(f"Error setting up database tables: {e}")
             raise
+    
+    def update_user_language(self, user_id: str, lang: str) -> bool:
+        """Update user's language preference.
+        
+        Args:
+            user_id: The user's ID
+            lang: Language code (e.g., 'en', 'es')
+            
+        Returns:
+            bool: True if update was successful, False otherwise
+        """
+        try:
+            self.cursor.execute(
+                "UPDATE users SET lang = ? WHERE user_id = ?",
+                (lang, user_id)
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.Error as e:
+            logger.error(f"Error updating user language: {e}")
+            return False
     
     def close(self):
         """Close the database connection."""
@@ -66,7 +88,7 @@ class Database:
         """Get user data by Telegram ID."""
         try:
             self.cursor.execute(
-                "SELECT user_id, telegram_id, name, key_gdrive, folder_id, folder_url, spreadsheet_id, spreadsheet_url FROM users WHERE telegram_id = ?", 
+                "SELECT user_id, telegram_id, name, key_gdrive, folder_id, folder_url, spreadsheet_id, spreadsheet_url, lang FROM users WHERE telegram_id = ?", 
                 (telegram_id,)
             )
             user = self.cursor.fetchone()
@@ -80,7 +102,8 @@ class Database:
                     "folder_id": user[4],
                     "folder_url": user[5],
                     "spreadsheet_id": user[6],
-                    "spreadsheet_url": user[7]
+                    "spreadsheet_url": user[7],
+                    "lang": user[8] if len(user) > 8 else 'en'  # Default to 'en' if column doesn't exist yet
                 }
             return None
         except sqlite3.Error as e:
