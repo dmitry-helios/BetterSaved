@@ -36,4 +36,5 @@ bot-key.pem
 # Ignore developer notes/readme
 
 dev_readme.md
+docker_readme.md
 *.bat

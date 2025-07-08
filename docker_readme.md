@@ -22,18 +22,28 @@
 
 3. **Clone the repository**
    ```bash
-   git clone -b Test https://github.com/yourusername/BetterSaved.git bettersaved-bot-test
+   git clone -b test https://github.com/yourusername/BetterSaved.git bettersaved-bot-test
    cd bettersaved-bot-test
+   ```
+   or
+   ```bash
+   git clone -b main https://github.com/yourusername/BetterSaved.git bettersaved-bot-main
+   cd bettersaved-bot-main
    ```
 
 4. **Build the Docker image**
    ```bash
    docker build -t bettersaved:test .
    ```
+   or
+   ```bash
+   docker build -t bettersaved:main .
+   ```
 
 5. **Run the container**
    ```bash
    docker run -d \
+     --restart unless-stopped \
      --name bettersaved-test \
      -v ~/bot-data:/app/data \
      -v ~/bot-data/client_secret.json:/app/client_secret.json \
@@ -42,6 +52,19 @@
      -e GOOGLE_DRIVE_FOLDER="BetterSaved Test" \
      -e ENVIRONMENT="production" \
      bettersaved:test
+   ```
+   or
+   ```bash
+   docker run -d \
+     --restart unless-stopped \
+     --name bettersaved-main \
+     -v ~/bot-data:/app/data \
+     -v ~/bot-data/client_secret.json:/app/client_secret.json \
+     -e TELEGRAM_TOKEN="your-telegram-token" \
+     -e DB_PATH="/app/data/bettersaved.db" \
+     -e GOOGLE_DRIVE_FOLDER="BetterSaved" \
+     -e ENVIRONMENT="production" \
+     bettersaved:main
    ```
 
 6. **Verify the container is running**
@@ -54,6 +77,10 @@
 ### View Logs
 ```bash
 docker logs -f bettersaved-test
+```
+or
+```bash
+docker logs -f bettersaved-main
 ```
 
 ### Stop the Container
@@ -121,3 +148,21 @@ sqlite3 ~/bot-data/bettersaved_test.db
 - All data in `~/bot-data` persists between container restarts
 - The container runs as a non-root user for security
 - Logs can be found inside the container at `/app/logs/`
+
+## Easy Brach Updates
+```bash
+cd ~/bettersaved-bot-test # Change to your test directory
+git pull origin test # Pull the latest changes from the test branch
+docker build -t bettersaved:test . # Build the Docker image
+docker stop bettersaved-test # Stop the existing container
+docker rm bettersaved-test # Remove the existing container
+docker run -d \
+  --name bettersaved-test \
+  -v ~/bot-data:/app/data \
+  -v ~/bot-data/client_secret.json:/app/client_secret.json \
+  -e TELEGRAM_TOKEN="8137172493:AAEIjNgom3IGeHbB_DyFEd7I4jH_JNH1Lns" \
+  -e DB_PATH="/app/data/bettersaved_test.db" \
+  -e GOOGLE_DRIVE_FOLDER="BetterSaved_Test" \
+  -e ENVIRONMENT="production" \
+  bettersaved:test
+```
