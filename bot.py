@@ -5,9 +5,11 @@ testin1g
 import logging
 import os
 import json
+import logging
 import traceback
+from typing import Dict, Any, Optional, List, Union
 from datetime import datetime
-from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -81,8 +83,9 @@ class BetterSavedBot:
         self._register_handlers()
         
     def _register_handlers(self):
-        """Register command and message handlers."""
+        """Register all command and message handlers."""
         # Command handlers
+        self.application.add_handler(CommandHandler("test_banner", self.test_banner))
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
         self.application.add_handler(CommandHandler("user", self.user_command))
@@ -128,6 +131,64 @@ class BetterSavedBot:
         
         logger.info("All handlers registered successfully")
     
+    async def test_banner(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test command to verify banner file access."""
+        user = update.effective_user
+        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media', 'bot-banner.png')
+        
+        # Check if file exists and is accessible
+        response = ["🔍 Banner File Test Results:", "", f"Looking for banner at: {banner_path}", ""]
+        
+        if not os.path.exists(banner_path):
+            response.append("❌ Error: Banner file does not exist at the specified path")
+            # Try to find the file elsewhere
+            for root, _, files in os.walk('/app'):
+                if 'bot-banner.png' in files:
+                    response.append(f"⚠️  Found banner at: {os.path.join(root, 'bot-banner.png')}")
+            response.append("")
+            response.append("📁 Directory contents:")
+            try:
+                media_dir = os.path.dirname(banner_path)
+                response.extend([f"  - {f}" for f in os.listdir(media_dir)])
+            except Exception as e:
+                response.append(f"  ❌ Could not list directory: {e}")
+        else:
+            response.append("✅ Banner file exists!")
+            try:
+                # Try to read the file
+                with open(banner_path, 'rb') as f:
+                    f.read(4)  # Read first 4 bytes to check if file is readable
+                response.append("✅ File is readable")
+                
+                # Get file stats
+                stat = os.stat(banner_path)
+                response.append(f"📊 File stats:")
+                response.append(f"  - Size: {stat.st_size} bytes")
+                response.append(f"  - Permissions: {oct(stat.st_mode)[-3:]}")
+                
+                # Try to send the banner
+                response.append("")
+                response.append("🔄 Attempting to send banner...")
+                try:
+                    with open(banner_path, 'rb') as banner_file:
+                        await update.message.reply_photo(
+                            photo=banner_file,
+                            caption="🎉 Banner file found and sent successfully!"
+                        )
+                    response.append("✅ Successfully sent banner!")
+                except Exception as e:
+                    response.append(f"❌ Failed to send banner: {str(e)}")
+                    response.append(f"Error type: {type(e).__name__}")
+                    response.append("")
+                    response.append("Stack trace:")
+                    response.append(traceback.format_exc())
+                    
+            except Exception as e:
+                response.append(f"❌ Error reading file: {str(e)}")
+        
+        # Send the test results
+        await update.message.reply_text("\n".join(response))
+
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Send a message when the command /start is issued and register the user."""
         user = update.effective_user
@@ -161,24 +222,48 @@ class BetterSavedBot:
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # Path to the banner image
-        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media', 'bot-banner.png')
+        # Get the absolute path to the banner image
+        banner_filename = 'bot-banner.png'
+        banner_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'media', banner_filename)
+        
+        # Log the absolute path for debugging
+        logger.info(f"Looking for banner at: {banner_path}")
+        
+        # Check if the banner file exists and is accessible
+        if not os.path.exists(banner_path):
+            logger.error(f"Banner file not found at: {banner_path}")
+            # List the contents of the media directory for debugging
+            media_dir = os.path.dirname(banner_path)
+            try:
+                contents = os.listdir(media_dir)
+                logger.info(f"Contents of {media_dir}: {contents}")
+            except Exception as e:
+                logger.error(f"Could not list contents of {media_dir}: {e}")
         
         try:
             # Send the welcome banner with caption and buttons
             with open(banner_path, 'rb') as banner_file:
+                # Read the first few bytes to verify the file is accessible
+                banner_file.read(4)  # Read first 4 bytes to verify file is readable
+                banner_file.seek(0)  # Reset file pointer
+                
+                logger.info(f"Sending welcome banner to user {user.id}")
                 await update.message.reply_photo(
                     photo=banner_file,
                     caption=welcome_caption,
                     parse_mode='HTML',
                     reply_markup=reply_markup
                 )
-            logger.info(f"Sent welcome banner to user {user.id}")
+                logger.info(f"Successfully sent welcome banner to user {user.id}")
         except Exception as e:
             # Fallback to text-only message if image sending fails
-            logger.error(f"Failed to send welcome banner: {e}")
+            error_msg = f"Failed to send welcome banner: {str(e)}. Path: {banner_path}"
+            if hasattr(e, 'args') and e.args:
+                error_msg += f"\nError details: {e.args}"
+            logger.error(error_msg, exc_info=True)
+            
             await update.message.reply_text(
-                f"Hi {user.first_name}! {welcome_caption}",
+                f"👋 Hi {user.first_name}! {welcome_caption}",
                 parse_mode='HTML',
                 reply_markup=reply_markup
             )
